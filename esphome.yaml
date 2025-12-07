@@ -1,0 +1,20 @@
+sensor:
+  - platform: adc
+    pin: GPIO17 #Change to your Analog Input for your board. ESP-01 has only one, and it is GPIO17.
+    name: "Soil Moisture Raw (V)"
+    id: soil_raw_v
+    update_interval: 2s
+
+  - platform: template
+    name: "Soil Moisture (%)"
+    unit_of_measurement: "%"
+    lambda: |-
+      // Calibration values
+      const float dry = 1.00000;   // open-circuit / air
+      const float wet = 0.00098;   // short / fully wet
+      float v = id(soil_raw_v).state;
+      // Map so that 0% = dry, 100% = wet. Clamp to [0,100]
+      float pct = (dry - v) / (dry - wet) * 100.0;
+      if (pct < 0.0) pct = 0.0;
+      if (pct > 100.0) pct = 100.0;
+      return pct;
